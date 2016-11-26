@@ -23,7 +23,7 @@ func (daemon *Daemon) ContainerStats(ctx context.Context, prefixOrName string, c
 	if runtime.GOOS == "solaris" {
 		return fmt.Errorf("%+v does not support stats", runtime.GOOS)
 	}
-	// Remote API version (used for backwards compatibility)
+	// Engine API version (used for backwards compatibility)
 	apiVersion := config.Version
 
 	container, err := daemon.GetContainer(prefixOrName)
@@ -31,8 +31,8 @@ func (daemon *Daemon) ContainerStats(ctx context.Context, prefixOrName string, c
 		return err
 	}
 
-	// If the container is not running and requires no stream, return an empty stats.
-	if !container.IsRunning() && !config.Stream {
+	// If the container is either not running or restarting and requires no stream, return an empty stats.
+	if (!container.IsRunning() || container.IsRestarting()) && !config.Stream {
 		return json.NewEncoder(config.OutStream).Encode(&types.Stats{})
 	}
 
@@ -130,6 +130,88 @@ func (daemon *Daemon) ContainerStats(ctx context.Context, prefixOrName string, c
 			return nil
 		}
 	}
+}
+
+// AllContainerStats writes information about the container to the stream
+// given in the config object.
+func (daemon *Daemon) AllContainerStats(ctx context.Context, config *backend.ContainerStatsConfig) error {
+	if runtime.GOOS == "solaris" {
+		return fmt.Errorf("%+v does not support stats", runtime.GOOS)
+	}
+	// Engine API version (used for backwards compatibility)
+	apiVersion := config.Version
+
+	containers, err := daemon.GetAll()
+	if err != nil {
+		return err
+	}
+
+	outStream := config.OutStream
+	if config.Stream {
+		wf := ioutils.NewWriteFlusher(outStream)
+		defer wf.Close()
+		wf.Flush()
+		outStream = wf
+	}
+
+	var preCPUStats types.CPUStats
+	var preRead time.Time
+	getStatJSON := func(v interface{}) *types.StatsJSON {
+		ss := v.(types.StatsJSON)
+		ss.Name = container.Name
+		ss.ID = container.ID
+		ss.PreCPUStats = preCPUStats
+		ss.PreRead = preRead
+		preCPUStats = ss.CPUStats
+		preRead = ss.Read
+		return &ss
+	}
+
+	enc := json.NewEncoder(outStream)
+
+	var multiStatsJson map[string]interface{}
+	multiStatsJson = make(map[string]interface{})
+	for _, container := range containers {
+		// If the container is either not running or restarting and requires no stream, return an empty stats.
+		if (!container.IsRunning() || container.IsRestarting()) && !config.Stream {
+			continue
+		}
+
+		updates := daemon.subscribeToContainerStats(container)
+		defer daemon.unsubscribeToContainerStats(container, updates)
+
+		noStreamFirstFrame := true
+		hasOutput = false
+		for !hasOutput {
+			select {
+			case v, ok := <-updates:
+				if !ok {
+					return nil
+				}
+
+				var statsJSON interface{}
+				statsJSONPost120 := getStatJSON(v)
+
+				statsJSON = statsJSONPost120
+
+				if !config.Stream && noStreamFirstFrame {
+					// prime the cpu stats so they aren't 0 in the final output
+					noStreamFirstFrame = false
+					continue
+				}
+
+				multiStatsJson[statsJSON.ID] = statsJSON
+				hasOutput = true
+
+			case <-ctx.Done():
+				return nil
+			}
+		}
+	}
+	if err := enc.Encode(multiStatsJson); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (daemon *Daemon) subscribeToContainerStats(c *container.Container) chan interface{} {
