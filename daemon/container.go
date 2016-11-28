@@ -153,16 +153,7 @@ func (daemon *Daemon) GetByName(name string) (*container.Container, error) {
 
 // GetByName returns all containers
 func (daemon *Daemon) GetAll() ([]*container.Container, error) {
-	var allE []*container.Container
-	allId := daemon.containers.List()
-	for _, id : range allId {
-		e := daemon.containers.Get(id)
-		if e == nil {
-			return nil, fmt.Errorf("Could not find container for entity id %s", id)
-		}
-		append(allE, e)
-	}
-	return allE, nil
+	return daemon.containers.List(), nil
 }
 
 // newBaseContainer creates a new container with its initial

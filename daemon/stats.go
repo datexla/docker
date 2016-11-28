@@ -158,8 +158,8 @@ func (daemon *Daemon) AllContainerStats(ctx context.Context, config *backend.Con
 	var preRead time.Time
 	getStatJSON := func(v interface{}) *types.StatsJSON {
 		ss := v.(types.StatsJSON)
-		ss.Name = container.Name
-		ss.ID = container.ID
+		// ss.Name = container.Name
+		// ss.ID = container.ID
 		ss.PreCPUStats = preCPUStats
 		ss.PreRead = preRead
 		preCPUStats = ss.CPUStats
@@ -181,7 +181,7 @@ func (daemon *Daemon) AllContainerStats(ctx context.Context, config *backend.Con
 		defer daemon.unsubscribeToContainerStats(container, updates)
 
 		noStreamFirstFrame := true
-		hasOutput = false
+		hasOutput := false
 		for !hasOutput {
 			select {
 			case v, ok := <-updates:
@@ -191,6 +191,8 @@ func (daemon *Daemon) AllContainerStats(ctx context.Context, config *backend.Con
 
 				var statsJSON interface{}
 				statsJSONPost120 := getStatJSON(v)
+				statsJSONPost120.Name = container.Name
+				statsJSONPost120.ID = container.ID
 
 				statsJSON = statsJSONPost120
 
@@ -200,7 +202,7 @@ func (daemon *Daemon) AllContainerStats(ctx context.Context, config *backend.Con
 					continue
 				}
 
-				multiStatsJson[statsJSON.ID] = statsJSON
+				multiStatsJson[statsJSONPost120.ID] = statsJSON
 				hasOutput = true
 
 			case <-ctx.Done():

@@ -79,7 +79,7 @@ func (s *containerRouter) getAllContainersStats(ctx context.Context, w http.Resp
 		return err
 	}
 
-	stream := httputils.BoolValueOrDefault(r, "stream", true)
+	stream := httputils.BoolValueOrDefault(r, "stream", false)
 	if !stream {
 		w.Header().Set("Content-Type", "application/json")
 	}
