@@ -139,7 +139,7 @@ func (daemon *Daemon) AllContainerStats(ctx context.Context, config *backend.Con
 		return fmt.Errorf("%+v does not support stats", runtime.GOOS)
 	}
 	// Engine API version (used for backwards compatibility)
-	apiVersion := config.Version
+	// apiVersion := config.Version
 
 	containers, err := daemon.GetAll()
 	if err != nil {
