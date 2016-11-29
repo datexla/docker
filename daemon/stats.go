@@ -169,8 +169,7 @@ func (daemon *Daemon) AllContainerStats(ctx context.Context, config *backend.Con
 
 	enc := json.NewEncoder(outStream)
 
-	var multiStatsJson map[string]interface{}
-	multiStatsJson = make(map[string]interface{})
+	var multiStatsJson []*types.StatsJSON
 	for _, container := range containers {
 		// If the container is either not running or restarting and requires no stream, return an empty stats.
 		if (!container.IsRunning() || container.IsRestarting()) && !config.Stream {
@@ -202,7 +201,7 @@ func (daemon *Daemon) AllContainerStats(ctx context.Context, config *backend.Con
 					continue
 				}
 
-				multiStatsJson[statsJSONPost120.ID] = statsJSON
+				multiStatsJson = append(multiStatsJson, statsJSON)
 				hasOutput = true
 
 			case <-ctx.Done():
