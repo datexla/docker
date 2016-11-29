@@ -169,7 +169,7 @@ func (daemon *Daemon) AllContainerStats(ctx context.Context, config *backend.Con
 
 	enc := json.NewEncoder(outStream)
 
-	var multiStatsJson []*types.StatsJSON
+	var multiStatsJson []interface{}
 	for _, container := range containers {
 		// If the container is either not running or restarting and requires no stream, return an empty stats.
 		if (!container.IsRunning() || container.IsRestarting()) && !config.Stream {
