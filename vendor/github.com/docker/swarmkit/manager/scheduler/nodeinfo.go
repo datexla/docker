@@ -22,6 +22,9 @@ type NodeInfo struct {
 	// TODO(aaronl): When spec versioning is supported, this should track
 	// the version of the spec that failed.
 	recentFailures map[string][]time.Time
+
+	// Datexla added for scheduler
+	scoreSelf float64
 }
 
 func newNodeInfo(n *api.Node, tasks map[string]*api.Task, availableResources api.Resources) NodeInfo {
