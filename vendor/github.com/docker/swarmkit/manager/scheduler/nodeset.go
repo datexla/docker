@@ -6,6 +6,7 @@ import (
 	"time"
 	"sync"
 	"net/http"
+	"io/ioutil"
 
 	"github.com/docker/swarmkit/api"
 	"github.com/bitly/go-simplejson"
@@ -132,13 +133,15 @@ func (ns *nodeSet) findBestNodes(n int, meetsConstraints func(*NodeInfo) bool, n
 
 func (ns *nodeSet) updateAllNodeScore() error {
 
-	url := "http://127.0.0.1:4243/nodes?filters=%7b%22role%22%3a%22worker%22%7d"
+	url := "http://127.0.0.1:4243/nodes?filters={%22role%22:[%22worker%22]}"
+
 	res, err := http.Get(url)
 
 	if err != nil {
 		return errors.New("call url failed")
 	}
 
+	defer res.Body.Close()
 	body, err := ioutil.ReadAll(res.Body)
 	if err != nil {
 		return errors.New("parse response body failed")
@@ -149,15 +152,18 @@ func (ns *nodeSet) updateAllNodeScore() error {
 		return errors.New("parse json failed")
 	}
 
-	Peers := statsJson.MustArray()
-
 	wg := new(sync.WaitGroup)
 
-	for _, peer := range Peers {
+	for i := 0; ; i++{
 		wg.Add(1)
+		peer := statsJson.GetIndex(i)
 		ip := peer.Get("Status").Get("Addr").MustString()
-		nodeId := peer.Get("ID").MustString()
-		go calcNodeScore(&ns[nodeId], ip, wg)
+		if ip != ""{
+			nodeId := peer.Get("ID").MustString()
+			go calcNodeScore(&ns[nodeId], ip, wg)
+		} else{
+			break
+		}
 	}
 
 	wg.Wait()
@@ -191,18 +197,26 @@ func calcNodeScore(nodeInfo *NodeInfo, ip string,  wg *sync.WaitGroup) error {
 	var usedCPU float64 = 0.0
 	var usedMem float64 = 0.0
 
-	statsArray := statsJson.MustArray()
-	for _, stats := range statsArray {
-		usedCPU += stats.Get("cpu_stats").Get("cpu_usage").Get("total_usage").MustFloat64()
-		usedMem += stats.Get("memory_stats").Get("usage").MustFloat64()
+	for i := 0; ; i++{
+		stats := statsJson.GetIndex(i)
+		exists := stats.Get("read").MustString()
+		if exists != ""{
+			currentCPU := stats.Get("cpu_stats").Get("cpu_usage").Get("total_usage").MustFloat64()
+			currentMem := stats.Get("memory_stats").Get("usage").MustFloat64()
+			usedCPU += currentCPU
+			usedMem += currentMem
+			fmt.Println(i)
+		} else{
+			break
+		}
 	}
 
 	const (
 		w1 = 1.0
 		w2 = 1.0
 	)
-	totalCPU := nodeInfo.Description.Resources.NanoCPUs
-	totalMem := nodeInfo.Description.Resources.MemoryBytes
+	totalCPU := float64(nodeInfo.Description.Resources.NanoCPUs)
+	totalMem := float64(nodeInfo.Description.Resources.MemoryBytes)
 	score := w1 * (usedCPU / totalCPU) + w2 * (usedMem / totalMem)
 
 	// update score
