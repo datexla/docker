@@ -152,18 +152,16 @@ func (ns *nodeSet) updateAllNodeScore() error {
 		return errors.New("parse json failed")
 	}
 
+	peersNum := len(statsJson.MustArray())
+
 	wg := new(sync.WaitGroup)
 
-	for i := 0; ; i++{
-		wg.Add(1)
+	for i := 0 ; i < peersNum; i++ {
 		peer := statsJson.GetIndex(i)
 		ip := peer.Get("Status").Get("Addr").MustString()
-		if ip != ""{
-			nodeId := peer.Get("ID").MustString()
-			go calcNodeScore(&ns[nodeId], ip, wg)
-		} else{
-			break
-		}
+		nodeId := peer.Get("ID").MustString()
+		wg.Add(1)
+		go calcNodeScore(ns, nodeId, ip, wg)
 	}
 
 	wg.Wait()
@@ -171,11 +169,13 @@ func (ns *nodeSet) updateAllNodeScore() error {
 	return nil
 }
 
-func calcNodeScore(nodeInfo *NodeInfo, ip string,  wg *sync.WaitGroup) error {
+func calcNodeScore(ns *nodeSet, id string, ip string,  wg *sync.WaitGroup) error {
 	// Decreasing internal counter for wait-group as soon as goroutine finishes
 	defer wg.Done()
+	nodeInfo := ns.nodes[id]
 	// assume score is zero if not reach from url
 	nodeInfo.scoreSelf = 0.0
+	ns.nodes[id] = nodeInfo
 	// call url
 	url := "http://" + ip + ":4243/containers/all/stats"
 	res, err := http.Get(url)
@@ -193,22 +193,15 @@ func calcNodeScore(nodeInfo *NodeInfo, ip string,  wg *sync.WaitGroup) error {
 	if err != nil {
 		return errors.New("parse json failed")
 	}
+	statsNum := len(statsJson.MustArray())
 
 	var usedCPU float64 = 0.0
 	var usedMem float64 = 0.0
 
-	for i := 0; ; i++{
-		stats := statsJson.GetIndex(i)
-		exists := stats.Get("read").MustString()
-		if exists != ""{
-			currentCPU := stats.Get("cpu_stats").Get("cpu_usage").Get("total_usage").MustFloat64()
-			currentMem := stats.Get("memory_stats").Get("usage").MustFloat64()
-			usedCPU += currentCPU
-			usedMem += currentMem
-			fmt.Println(i)
-		} else{
-			break
-		}
+	for i := 0; i < statsNum; i++ {
+		stat := statsJson.GetIndex(i)
+		usedCPU += stat.Get("cpu_stats").Get("cpu_usage").Get("total_usage").MustFloat64()
+		usedMem += stat.Get("memory_stats").Get("usage").MustFloat64()
 	}
 
 	const (
@@ -221,6 +214,7 @@ func calcNodeScore(nodeInfo *NodeInfo, ip string,  wg *sync.WaitGroup) error {
 
 	// update score
 	nodeInfo.scoreSelf = score
+	ns.nodes[id] = nodeInfo
 
 	return nil
 }
