@@ -11,6 +11,7 @@ import (
 	"github.com/docker/swarmkit/protobuf/ptypes"
 	"github.com/pkg/errors"
 	"golang.org/x/net/context"
+	"github.com/datexla/cmdlog"
 )
 
 // Controller controls execution of a task.
@@ -317,6 +318,7 @@ func Do(ctx context.Context, task *api.Task, ctlr Controller) (*api.TaskStatus, 
 			return fatal(err)
 		}
 
+		cmdlog.write(cmdlog.serviceFinish, "taskId: " + task.ID + ", serviceId: " + task.ServiceID + ", nodeId: " + task.NodeID, cmdlog.defaultPathToFile)
 		return transition(api.TaskStateCompleted, "finished")
 	}
 
