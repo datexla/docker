@@ -318,7 +318,7 @@ func Do(ctx context.Context, task *api.Task, ctlr Controller) (*api.TaskStatus, 
 			return fatal(err)
 		}
 
-		cmdlog.Write(cmdlog.serviceFinish, "taskId: " + task.ID + ", serviceId: " + task.ServiceID + ", nodeId: " + task.NodeID, cmdlog.defaultPathToFile)
+		cmdlog.Write(cmdlog.ServiceFinish, "taskId: " + task.ID + ", serviceId: " + task.ServiceID + ", nodeId: " + task.NodeID, cmdlog.DefaultPathToFile)
 		return transition(api.TaskStateCompleted, "finished")
 	}
 

@@ -499,7 +499,7 @@ func (s *Scheduler) scheduleTaskGroup(ctx context.Context, taskGroup map[string]
 		break
 	}
 
-	cmdlog.Write(cmdlog.serviceCome, "serviceId: " + t.ServiceID + ", taskID: " + t.ID, cmdlog.defaultPathToFile)
+	cmdlog.Write(cmdlog.ServiceCome, "serviceId: " + t.ServiceID + ", taskID: " + t.ID, cmdlog.DefaultPathToFile)
 
 	s.pipeline.SetTask(t)
 

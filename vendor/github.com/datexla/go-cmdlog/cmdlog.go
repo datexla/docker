@@ -5,11 +5,11 @@ import (
 	"os/exec"
 )
 
-var (
-	defaultPathToFile = "/var/log/docker/scheduler.log"
-	serviceCome       = "[service come  ]"
-	serviceFinish     = "[service finish]"
-	scorePrint        = "[score   print ]"
+const (
+	DefaultPathToFile = "/var/log/docker/scheduler.log"
+	ServiceCome       = "[service come  ]"
+	ServiceFinish     = "[service finish]"
+	ScorePrint        = "[score   print ]"
 )
 
 func Write(state string, event string, pathToFile string) {

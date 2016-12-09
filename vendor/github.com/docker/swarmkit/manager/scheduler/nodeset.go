@@ -219,7 +219,7 @@ func calcNodeScore(ns *nodeSet, id string, ip string,  wg *sync.WaitGroup) error
 	ns.nodes[id] = nodeInfo
 
 	scoreStr := strconv.FormatFloat(score, 'f', -1, 64)
-	cmdlog.Write(cmdlog.scorePrint, "hostName: " + nodeInfo.Description.Hostname + ", score: " + scoreStr + ", nodeID: " + id, cmdlog.defaultPathToFile)
+	cmdlog.Write(cmdlog.ScorePrint, "hostName: " + nodeInfo.Description.Hostname + ", score: " + scoreStr + ", nodeID: " + id, cmdlog.DefaultPathToFile)
 
 	return nil
 }
