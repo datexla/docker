@@ -11,7 +11,7 @@ import (
 
 	"github.com/docker/swarmkit/api"
 	"github.com/bitly/go-simplejson"
-	"github.com/datexla/go-cmdlog/cmdlog"
+	"github.com/datexla/go-cmdlog"
 )
 
 var errNodeNotFound = errors.New("node not found in scheduler dataset")

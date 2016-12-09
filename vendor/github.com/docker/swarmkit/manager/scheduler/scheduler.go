@@ -10,7 +10,7 @@ import (
 	"github.com/docker/swarmkit/manager/state/store"
 	"github.com/docker/swarmkit/protobuf/ptypes"
 	"golang.org/x/net/context"
-	"github.com/datexla/go-cmdlog/cmdlog"
+	"github.com/datexla/go-cmdlog"
 )
 
 const (
