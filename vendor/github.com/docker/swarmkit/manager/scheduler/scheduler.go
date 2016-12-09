@@ -10,7 +10,7 @@ import (
 	"github.com/docker/swarmkit/manager/state/store"
 	"github.com/docker/swarmkit/protobuf/ptypes"
 	"golang.org/x/net/context"
-	"github.com/datexla/go-cmdlog"
+	"github.com/datexla/go-cmdlog/cmdlog"
 )
 
 const (
@@ -499,7 +499,7 @@ func (s *Scheduler) scheduleTaskGroup(ctx context.Context, taskGroup map[string]
 		break
 	}
 
-	cmdlog.write(cmdlog.serviceCome, "serviceId: " + t.ServiceID + ", taskID: " + t.ID, cmdlog.defaultPathToFile)
+	cmdlog.Write(cmdlog.serviceCome, "serviceId: " + t.ServiceID + ", taskID: " + t.ID, cmdlog.defaultPathToFile)
 
 	s.pipeline.SetTask(t)
 

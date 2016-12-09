@@ -11,7 +11,7 @@ import (
 
 	"github.com/docker/swarmkit/api"
 	"github.com/bitly/go-simplejson"
-	"github.com/datexla/go-cmdlog"
+	"github.com/datexla/go-cmdlog/cmdlog"
 )
 
 var errNodeNotFound = errors.New("node not found in scheduler dataset")
@@ -219,7 +219,7 @@ func calcNodeScore(ns *nodeSet, id string, ip string,  wg *sync.WaitGroup) error
 	ns.nodes[id] = nodeInfo
 
 	scoreStr := strconv.FormatFloat(score, 'f', -1, 64)
-	cmdlog.write(cmdlog.scorePrint, "hostName: " + nodeInfo.Description.Hostname + ", score: " + scoreStr + ", nodeID: " + id, cmdlog.defaultPathToFile)
+	cmdlog.Write(cmdlog.scorePrint, "hostName: " + nodeInfo.Description.Hostname + ", score: " + scoreStr + ", nodeID: " + id, cmdlog.defaultPathToFile)
 
 	return nil
 }
