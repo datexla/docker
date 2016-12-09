@@ -11,7 +11,7 @@ import (
 	"github.com/docker/swarmkit/protobuf/ptypes"
 	"github.com/pkg/errors"
 	"golang.org/x/net/context"
-	"github.com/datexla/cmdlog"
+	"github.com/datexla/go-cmdlog"
 )
 
 // Controller controls execution of a task.
