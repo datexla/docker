@@ -507,7 +507,7 @@ func (s *Scheduler) scheduleTaskGroup(ctx context.Context, taskGroup map[string]
 
 	nodeLess := func(a *NodeInfo, b *NodeInfo) bool {
 		// Judge by scoreSelf field
-		return a.scoreSelf > b.scoreSelf
+		return a.scoreSelf < b.scoreSelf
 	}
 
 	nodes := s.nodeSet.findBestNodes(len(taskGroup), s.pipeline.Process, nodeLess)
