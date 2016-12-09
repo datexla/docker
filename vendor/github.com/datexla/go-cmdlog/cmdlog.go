@@ -12,7 +12,7 @@ var (
 	scorePrint        = "[score   print ]"
 )
 
-func write(state string, event string, pathToFile string) {
+func Write(state string, event string, pathToFile string) {
 	t := time.Now().Format(time.UnixDate)
 	content := t + "\t" + state + "\t" + event
 	command := "echo \"" + content + "\" >> " + pathToFile
