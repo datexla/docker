@@ -220,11 +220,11 @@ func calcNodeScore(ns *nodeSet, id string, ip string,  wg *sync.WaitGroup) error
 	ns.nodes[id] = nodeInfo
 
 	scoreStr := strconv.FormatFloat(score, 'f', -1, 64)
-	usedCPUstr := strconv.FormatFloat(usedCPU, 'f', -1, 64)
-	totalCPUstr := strconv.FormatFloat(totalCPU, 'f', -1, 64)
-	usedMemstr := strconv.FormatFloat(usedMem, 'f', -1, 64)
-	totalMemstr := strconv.FormatFloat(totalMem, 'f', -1, 64)
-	cmdlog.Write(cmdlog.ScorePrint, "hostName: " + nodeInfo.Description.Hostname + ", score: " + scoreStr + ", usedCpu: " + usedCPUstr + ", totalCpu" + totalCPUstr + ", usedMem: " + usedMemStr + ", totalMem: " + totalMemstr + ", nodeID: " + id, cmdlog.DefaultPathToFile)
+	usedCPUStr := strconv.FormatFloat(usedCPU, 'f', -1, 64)
+	totalCPUStr := strconv.FormatFloat(totalCPU, 'f', -1, 64)
+	usedMemStr := strconv.FormatFloat(usedMem, 'f', -1, 64)
+	totalMemStr := strconv.FormatFloat(totalMem, 'f', -1, 64)
+	cmdlog.Write(cmdlog.ScorePrint, "hostName: " + nodeInfo.Description.Hostname + ", score: " + scoreStr + ", usedCpu: " + usedCPUStr + ", totalCpu: " + totalCPUStr + ", usedMem: " + usedMemStr + ", totalMem: " + totalMemStr + ", nodeID: " + id, cmdlog.DefaultPathToFile)
 
 	return nil
 }
