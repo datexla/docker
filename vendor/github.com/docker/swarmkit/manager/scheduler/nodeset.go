@@ -179,6 +179,8 @@ func calcNodeScore(ns *nodeSet, id string, ip string,  wg *sync.WaitGroup) error
 	// assume score is zero if not reach from url
 	nodeInfo.scoreSelf = 0.0
 	ns.nodes[id] = nodeInfo
+
+	/*
 	// call url
 	url := "http://" + ip + ":4243/containers/all/stats"
 	res, err := http.Get(url)
@@ -206,6 +208,10 @@ func calcNodeScore(ns *nodeSet, id string, ip string,  wg *sync.WaitGroup) error
 		usedCPU += stat.Get("cpu_stats").Get("cpu_usage").Get("total_usage").MustFloat64()
 		usedMem += stat.Get("memory_stats").Get("usage").MustFloat64()
 	}
+	*/
+
+	usedCPU := float64(nodeInfo.AvailableResources.NanoCPUs)
+	usedMem := float64(nodeInfo.AvailableResources.MemoryBytes)
 
 	const (
 		w1 = 1.0
