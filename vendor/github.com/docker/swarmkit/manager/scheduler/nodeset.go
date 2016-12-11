@@ -180,45 +180,19 @@ func calcNodeScore(ns *nodeSet, id string, ip string,  wg *sync.WaitGroup) error
 	nodeInfo.scoreSelf = 0.0
 	ns.nodes[id] = nodeInfo
 
-	/*
-	// call url
-	url := "http://" + ip + ":4243/containers/all/stats"
-	res, err := http.Get(url)
-
-	if err != nil {
-		return errors.New("call url failed")
-	}
-
-	body, err := ioutil.ReadAll(res.Body)
-	if err != nil {
-		return errors.New("parse response body failed")
-	}
-
-	statsJson, err := simplejson.NewJson(body)
-	if err != nil {
-		return errors.New("parse json failed")
-	}
-	statsNum := len(statsJson.MustArray())
-
-	var usedCPU float64 = 0.0
-	var usedMem float64 = 0.0
-
-	for i := 0; i < statsNum; i++ {
-		stat := statsJson.GetIndex(i)
-		usedCPU += stat.Get("cpu_stats").Get("cpu_usage").Get("total_usage").MustFloat64()
-		usedMem += stat.Get("memory_stats").Get("usage").MustFloat64()
-	}
-	*/
-
-	usedCPU := float64(nodeInfo.AvailableResources.NanoCPUs)
-	usedMem := float64(nodeInfo.AvailableResources.MemoryBytes)
+	availableCPU := nodeInfo.AvailableResources.NanoCPUs
+	availableMem := nodeInfo.AvailableResources.MemoryBytes
 
 	const (
 		w1 = 1.0
 		w2 = 1.0
 	)
-	totalCPU := float64(nodeInfo.Description.Resources.NanoCPUs)
-	totalMem := float64(nodeInfo.Description.Resources.MemoryBytes)
+	totalCPU := nodeInfo.Description.Resources.NanoCPUs
+	totalMem := nodeInfo.Description.Resources.MemoryBytes
+
+	usedCPU := float64(totalCPU - availableCPU)
+	usedMem := float64(totalMem - availableMem)
+
 	score := w1 * (usedCPU / totalCPU) + w2 * (usedMem / totalMem)
 
 	// update score
