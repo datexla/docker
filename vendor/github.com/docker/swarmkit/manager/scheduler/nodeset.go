@@ -134,7 +134,7 @@ func (ns *nodeSet) findBestNodes(n int, meetsConstraints func(*NodeInfo) bool, n
 }
 
 func (ns *nodeSet) updateAllNodeScore() error {
-	//url := "http://127.0.0.1:4243/nodes?filters={%22role%22:[%22worker%22]}"
+	// url := "http://127.0.0.1:4243/nodes?filters={%22role%22:[%22worker%22]}"
 	// url := "http://127.0.0.1:4243/nodes?filters=%7b%22role%22%3a%5b%22worker%22%5d%7d"
 	url := "http://127.0.0.1:4243/nodes"
 
@@ -179,32 +179,73 @@ func calcNodeScore(ns *nodeSet, id string, ip string,  wg *sync.WaitGroup) error
 	// assume score is zero if not reach from url
 	nodeInfo.scoreSelf = 0.0
 	ns.nodes[id] = nodeInfo
+	// call url
+	url := "http://" + ip + ":4243/containers/all/stats"
+	res, err := http.Get(url)
 
-	availableCPU := float64(nodeInfo.AvailableResources.NanoCPUs)
-	availableMem := float64(nodeInfo.AvailableResources.MemoryBytes)
+	if err != nil {
+		return errors.New("call url failed")
+	}
+
+	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return errors.New("parse response body failed")
+	}
+
+	statsJson, err := simplejson.NewJson(body)
+	if err != nil {
+		return errors.New("parse json failed")
+	}
+	statsNum := len(statsJson.MustArray())
+
+	var usedCPU float64 = 0.0
+	var usedMem float64 = 0.0
+
+	for i := 0; i < statsNum; i++ {
+		stat := statsJson.GetIndex(i)
+
+		//calculate CPU usage
+		cpuPercentage := 0.0
+
+		currCPU := stat.Get("cpu_stats").Get("cpu_usage").Get("total_usage").MustFloat64()
+		prevCPU := stat.Get("precpu_stats").Get("cpu_usage").Get("total_usage").MustFloat64()
+		deltaCPU := currCPU - prevCPU
+		
+		currSys := stat.Get("cpu_stats").Get("system_cpu_usage").MustFloat64()
+		prevSys := stat.Get("precpu_stats").Get("system_cpu_usage").MustFloat64()
+		deltaSys := currSys - prevSys
+		
+		numCores := float64(len(stat.Get("cpu_stats").Get("cpu_usage").Get("percpu_usage").MustArray()))
+		
+		if deltaCPU > 0.0 && deltaSys > 0.0 {
+			cpuPercentage = deltaCPU / deltaSys * numCores * 100.0
+		}
+
+		usedCPU += cpuPercentage
+
+		//calculate memory usage
+		usedMem += stat.Get("memory_stats").Get("usage").MustFloat64()
+	}
 
 	const (
 		w1 = 1.0
 		w2 = 1.0
 	)
-	totalCPU := float64(nodeInfo.Description.Resources.NanoCPUs)
+
 	totalMem := float64(nodeInfo.Description.Resources.MemoryBytes)
 
-	usedCPU := float64(totalCPU - availableCPU)
-	usedMem := float64(totalMem - availableMem)
-
-	score := w1 * (usedCPU / totalCPU) + w2 * (usedMem / totalMem)
+	cpuScore := usedCPU
+	memScore := usedMem / totalMem * 100.0
+	score := w1 * cpuScore + w2 * memScore
 
 	// update score
 	nodeInfo.scoreSelf = score
 	ns.nodes[id] = nodeInfo
 
 	scoreStr := strconv.FormatFloat(score, 'f', -1, 64)
-	usedCPUStr := strconv.FormatFloat(usedCPU, 'f', -1, 64)
-	totalCPUStr := strconv.FormatFloat(totalCPU, 'f', -1, 64)
-	usedMemStr := strconv.FormatFloat(usedMem, 'f', -1, 64)
-	totalMemStr := strconv.FormatFloat(totalMem, 'f', -1, 64)
-	cmdlog.Write(cmdlog.ScorePrint, "hostName: " + nodeInfo.Description.Hostname + ", score: " + scoreStr + ", usedCpu: " + usedCPUStr + ", totalCpu: " + totalCPUStr + ", usedMem: " + usedMemStr + ", totalMem: " + totalMemStr + ", nodeID: " + id, cmdlog.DefaultPathToFile)
+	cpuScoreStr := strconv.FormatFloat(cpuScore, 'f', -1, 64)
+	memScoreStr := strconv.FormatFloat(memScore, 'f', -1, 64)
+	cmdlog.Write(cmdlog.ScorePrint, "hostName: " + nodeInfo.Description.Hostname + ", score: " + scoreStr + ", cpuScore: " + cpuScoreStr + ", memScore: " + memScoreStr + ", nodeID: " + id, cmdlog.DefaultPathToFile)
 
 	return nil
 }
