@@ -180,15 +180,15 @@ func calcNodeScore(ns *nodeSet, id string, ip string,  wg *sync.WaitGroup) error
 	nodeInfo.scoreSelf = 0.0
 	ns.nodes[id] = nodeInfo
 
-	availableCPU := nodeInfo.AvailableResources.NanoCPUs
-	availableMem := nodeInfo.AvailableResources.MemoryBytes
+	availableCPU := float64(nodeInfo.AvailableResources.NanoCPUs)
+	availableMem := float64(nodeInfo.AvailableResources.MemoryBytes)
 
 	const (
 		w1 = 1.0
 		w2 = 1.0
 	)
-	totalCPU := nodeInfo.Description.Resources.NanoCPUs
-	totalMem := nodeInfo.Description.Resources.MemoryBytes
+	totalCPU := float64(nodeInfo.Description.Resources.NanoCPUs)
+	totalMem := float64(nodeInfo.Description.Resources.MemoryBytes)
 
 	usedCPU := float64(totalCPU - availableCPU)
 	usedMem := float64(totalMem - availableMem)
