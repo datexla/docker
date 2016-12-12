@@ -157,7 +157,7 @@ func (ns *nodeSet) updateAllNodeScore() error {
 
 	peersNum := len(statsJson.MustArray())
 
-	/*wg := new(sync.WaitGroup)
+	wg := new(sync.WaitGroup)
 
 	for i := 0 ; i < peersNum; i++ {
 		peer := statsJson.GetIndex(i)
@@ -168,17 +168,6 @@ func (ns *nodeSet) updateAllNodeScore() error {
 	}
 
 	wg.Wait()
-
-	return nil*/
-
-	for i := 0 ; i < peersNum; i++ {
-		peer := statsJson.GetIndex(i)
-		ip := peer.Get("Status").Get("Addr").MustString()
-		nodeId := peer.Get("ID").MustString()
-		nodeInfo := ns.nodes[nodeId]
-		nodeInfo.scoreSelf = 0.0
-		ns.nodes[nodeId] = nodeInfo
-	}
 
 	return nil
 }
