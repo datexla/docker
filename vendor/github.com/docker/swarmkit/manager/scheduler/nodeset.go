@@ -158,6 +158,8 @@ func (ns *nodeSet) updateAllNodeScore() error {
 
 	peersNum := len(statsJson.MustArray())
 
+	cmdlog.Write(cmdlog.Debug, "ready to enter calcNodeScore function", cmdlog.DefaultPathToFile)
+
 	wg := new(sync.WaitGroup)
 
 	for i := 0 ; i < peersNum; i++ {
@@ -165,10 +167,14 @@ func (ns *nodeSet) updateAllNodeScore() error {
 		ip := peer.Get("Status").Get("Addr").MustString()
 		nodeId := peer.Get("ID").MustString()
 		wg.Add(1)
+		cmdlog.Write(cmdlog.Debug, "sync wait group add 1, ip = " + ip, cmdlog.DefaultPathToFile)
 		go calcNodeScore(ns, nodeId, ip, wg)
+		cmdlog.Write(cmdlog.Debug, "new thread to calc node score, ip  = " + ip, cmdlog.DefaultPathToFile)
 	}
 
 	wg.Wait()
+
+	cmdlog.Write(cmdlog.Debug, "finish updating all nodes scores", cmdlog.DefaultPathToFile)
 
 	return nil
 }

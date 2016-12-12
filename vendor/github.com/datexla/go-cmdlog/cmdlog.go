@@ -10,6 +10,7 @@ const (
 	ServiceCome       = "[service come  ]"
 	ServiceFinish     = "[service finish]"
 	ScorePrint        = "[score   print ]"
+	Debug             = "[debug         ]"
 )
 
 func Write(state string, event string, pathToFile string) {
