@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"io/ioutil"
 	"strconv"
+	"math/rand"
 
 	"github.com/docker/swarmkit/api"
 	"github.com/bitly/go-simplejson"
@@ -158,13 +159,14 @@ func (ns *nodeSet) updateAllNodeScore() error {
 	peersNum := len(statsJson.MustArray())
 
 	wg := new(sync.WaitGroup)
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 
 	for i := 0 ; i < peersNum; i++ {
 		peer := statsJson.GetIndex(i)
 		ip := peer.Get("Status").Get("Addr").MustString()
 		nodeId := peer.Get("ID").MustString()
 		wg.Add(1)
-		go calcNodeScore(ns, nodeId, ip, wg)
+		go calcNodeScore(ns, nodeId, ip, wg, r)
 	}
 
 	wg.Wait()
@@ -172,7 +174,8 @@ func (ns *nodeSet) updateAllNodeScore() error {
 	return nil
 }
 
-func calcNodeScore(ns *nodeSet, id string, ip string,  wg *sync.WaitGroup) error {
+// func calcNodeScore(ns *nodeSet, id string, ip string,  wg *sync.WaitGroup) error {
+func calcNodeScore(ns *nodeSet, id string, ip string,  wg *sync.WaitGroup, r *Rand) error {
 	// Decreasing internal counter for wait-group as soon as goroutine finishes
 	defer wg.Done()
 	nodeInfo := ns.nodes[id]
@@ -180,7 +183,7 @@ func calcNodeScore(ns *nodeSet, id string, ip string,  wg *sync.WaitGroup) error
 	nodeInfo.scoreSelf = 0.0
 	ns.nodes[id] = nodeInfo
 
-	// call url
+	/*// call url
 	url := "http://" + ip + ":4243/containers/all/stats"
 	res, err := http.Get(url)
 
@@ -226,7 +229,10 @@ func calcNodeScore(ns *nodeSet, id string, ip string,  wg *sync.WaitGroup) error
 
 		//calculate memory usage
 		usedMem += stat.Get("memory_stats").Get("usage").MustFloat64()
-	}
+	}*/
+
+	var usedCPU float64 = r.Float64()
+	var usedMem float64 = r.Float64()
 
 	const (
 		w1 = 1.0
@@ -246,7 +252,7 @@ func calcNodeScore(ns *nodeSet, id string, ip string,  wg *sync.WaitGroup) error
 	scoreStr := strconv.FormatFloat(score, 'f', -1, 64)
 	cpuScoreStr := strconv.FormatFloat(cpuScore, 'f', -1, 64)
 	memScoreStr := strconv.FormatFloat(memScore, 'f', -1, 64)
-	cmdlog.Write(cmdlog.ScorePrint, "hostName: " + nodeInfo.Description.Hostname + ", score: " + scoreStr + ", cpuScore: " + cpuScoreStr + ", memScore: " + memScoreStr + ", nodeID: " + id, cmdlog.DefaultPathToFile)
+	cmdlog.Write(cmdlog.ScorePrint, "hostName: " + nodeInfo.Description.Hostname + ", score: " + scoreStr + ", cpuScore: " + cpuScoreStr + ", memScore: " + memScoreStr + ", nodeID: " + id, cmdlog.DefaultPathToFile, ip)
 
 	return nil
 }
