@@ -175,10 +175,9 @@ func (ns *nodeSet) updateAllNodeScore() error {
 		peer := statsJson.GetIndex(i)
 		ip := peer.Get("Status").Get("Addr").MustString()
 		nodeId := peer.Get("ID").MustString()
-		nodeInfo := ns.nodes[id]
-		// assume score is zero if not reach from url
+		nodeInfo := ns.nodes[nodeId]
 		nodeInfo.scoreSelf = 0.0
-		ns.nodes[id] = nodeInfo
+		ns.nodes[nodeId] = nodeInfo
 	}
 
 	return nil
