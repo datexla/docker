@@ -159,14 +159,13 @@ func (ns *nodeSet) updateAllNodeScore() error {
 	peersNum := len(statsJson.MustArray())
 
 	wg := new(sync.WaitGroup)
-	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 
 	for i := 0 ; i < peersNum; i++ {
 		peer := statsJson.GetIndex(i)
 		ip := peer.Get("Status").Get("Addr").MustString()
 		nodeId := peer.Get("ID").MustString()
 		wg.Add(1)
-		go calcNodeScore(ns, nodeId, ip, wg, r)
+		go calcNodeScore(ns, nodeId, ip, wg)
 	}
 
 	wg.Wait()
@@ -175,7 +174,7 @@ func (ns *nodeSet) updateAllNodeScore() error {
 }
 
 // func calcNodeScore(ns *nodeSet, id string, ip string,  wg *sync.WaitGroup) error {
-func calcNodeScore(ns *nodeSet, id string, ip string,  wg *sync.WaitGroup, r *Rand) error {
+func calcNodeScore(ns *nodeSet, id string, ip string,  wg *sync.WaitGroup) error {
 	// Decreasing internal counter for wait-group as soon as goroutine finishes
 	defer wg.Done()
 	nodeInfo := ns.nodes[id]
@@ -231,6 +230,7 @@ func calcNodeScore(ns *nodeSet, id string, ip string,  wg *sync.WaitGroup, r *Ra
 		usedMem += stat.Get("memory_stats").Get("usage").MustFloat64()
 	}*/
 
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	var usedCPU float64 = r.Float64()
 	var usedMem float64 = r.Float64()
 
@@ -252,7 +252,7 @@ func calcNodeScore(ns *nodeSet, id string, ip string,  wg *sync.WaitGroup, r *Ra
 	scoreStr := strconv.FormatFloat(score, 'f', -1, 64)
 	cpuScoreStr := strconv.FormatFloat(cpuScore, 'f', -1, 64)
 	memScoreStr := strconv.FormatFloat(memScore, 'f', -1, 64)
-	cmdlog.Write(cmdlog.ScorePrint, "hostName: " + nodeInfo.Description.Hostname + ", score: " + scoreStr + ", cpuScore: " + cpuScoreStr + ", memScore: " + memScoreStr + ", nodeID: " + id, cmdlog.DefaultPathToFile, ip)
+	cmdlog.Write(cmdlog.ScorePrint, "hostName: " + nodeInfo.Description.Hostname + ", score: " + scoreStr + ", cpuScore: " + cpuScoreStr + ", memScore: " + memScoreStr + ", nodeID: " + id + ", ip: " + ip, cmdlog.DefaultPathToFile)
 
 	return nil
 }
