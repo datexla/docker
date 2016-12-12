@@ -200,7 +200,7 @@ func calcNodeScore(ns *nodeSet, id string, ip string,  wg *sync.WaitGroup) error
 
 	cmdlog.Write(cmdlog.Debug, ip + ", after ioutil readall =>" + string(body), cmdlog.DefaultPathToFile)
 
-	if string(body) == "null" {
+	if string(body) == "null\n" {
 		cmdlog.Write(cmdlog.ScorePrint, "hostName: " + nodeInfo.Description.Hostname + ", return api null", cmdlog.DefaultPathToFile)
 		return errors.New("api return null")
 	}
