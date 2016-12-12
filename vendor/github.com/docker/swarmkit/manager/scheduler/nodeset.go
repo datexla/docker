@@ -245,7 +245,9 @@ func calcNodeScore(ns *nodeSet, id string, ip string,  wg *sync.WaitGroup) error
 		usedMem += stat.Get("memory_stats").Get("usage").MustFloat64()
 	}
 
-	cmdlog.Write(cmdlog.Debug, ip + ", after calc usedCPU: " + string(usedCPU) + ", usedMem: " + string(usedMem), cmdlog.DefaultPathToFile)
+	usedCPUStr := strconv.FormatFloat(usedCPU, 'f', -1, 64)
+	usedMemStr := strconv.FormatFloat(usedMem, 'f', -1, 64)
+	cmdlog.Write(cmdlog.Debug, ip + ", after calc usedCPU: " + usedCPUStr + ", usedMem: " + usedMemStr, cmdlog.DefaultPathToFile)
 
 	const (
 		w1 = 1.0
