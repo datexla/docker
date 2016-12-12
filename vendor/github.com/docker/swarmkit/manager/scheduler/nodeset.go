@@ -191,10 +191,14 @@ func calcNodeScore(ns *nodeSet, id string, ip string,  wg *sync.WaitGroup) error
 		return errors.New("call url failed")
 	}
 
+	cmdlog.Write(cmdlog.Debug, ip + ", after http get =>" + res.Status, cmdlog.DefaultPathToFile)
+
 	body, err := ioutil.ReadAll(res.Body)
 	if err != nil {
 		return errors.New("parse response body failed")
 	}
+
+	cmdlog.Write(cmdlog.Debug, ip + ", after ioutil readall =>" + string(body), cmdlog.DefaultPathToFile)
 
 	if string(body) == "null" {
 		cmdlog.Write(cmdlog.ScorePrint, "hostName: " + nodeInfo.Description.Hostname + ", return api null", cmdlog.DefaultPathToFile)
@@ -205,7 +209,12 @@ func calcNodeScore(ns *nodeSet, id string, ip string,  wg *sync.WaitGroup) error
 	if err != nil {
 		return errors.New("parse json failed")
 	}
+
+	cmdlog.Write(cmdlog.Debug, ip + ", after simplejson newJson", cmdlog.DefaultPathToFile)
+
 	statsNum := len(statsJson.MustArray())
+
+	cmdlog.Write(cmdlog.Debug, ip + ", after simplejson len " + string(statsNum), cmdlog.DefaultPathToFile)
 
 	var usedCPU float64 = 0.0
 	var usedMem float64 = 0.0
@@ -235,6 +244,8 @@ func calcNodeScore(ns *nodeSet, id string, ip string,  wg *sync.WaitGroup) error
 		//calculate memory usage
 		usedMem += stat.Get("memory_stats").Get("usage").MustFloat64()
 	}
+
+	cmdlog.Write(cmdlog.Debug, ip + ", after calc usedCPU: " + string(usedCPU) + ", usedMem: " + string(usedMem), cmdlog.DefaultPathToFile)
 
 	const (
 		w1 = 1.0
