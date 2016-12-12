@@ -136,7 +136,7 @@ func (ns *nodeSet) findBestNodes(n int, meetsConstraints func(*NodeInfo) bool, n
 func (ns *nodeSet) updateAllNodeScore() error {
 	// url := "http://127.0.0.1:4243/nodes?filters={%22role%22:[%22worker%22]}"
 	// url := "http://127.0.0.1:4243/nodes?filters=%7b%22role%22%3a%5b%22worker%22%5d%7d"
-	url := "http://127.0.0.1:4243/nodes"
+/*	url := "http://127.0.0.1:4243/nodes"
 
 	res, err := http.Get(url)
 
@@ -167,7 +167,7 @@ func (ns *nodeSet) updateAllNodeScore() error {
 		go calcNodeScore(ns, nodeId, ip, wg)
 	}
 
-	wg.Wait()
+	wg.Wait()*/
 
 	return nil
 }
@@ -179,6 +179,7 @@ func calcNodeScore(ns *nodeSet, id string, ip string,  wg *sync.WaitGroup) error
 	// assume score is zero if not reach from url
 	nodeInfo.scoreSelf = 0.0
 	ns.nodes[id] = nodeInfo
+
 	// call url
 	url := "http://" + ip + ":4243/containers/all/stats"
 	res, err := http.Get(url)
