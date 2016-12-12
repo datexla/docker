@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"io/ioutil"
 	"strconv"
-	"math/rand"
 
 	"github.com/docker/swarmkit/api"
 	"github.com/bitly/go-simplejson"
@@ -158,8 +157,6 @@ func (ns *nodeSet) updateAllNodeScore() error {
 
 	peersNum := len(statsJson.MustArray())
 
-	cmdlog.Write(cmdlog.Debug, "ready to enter calcNodeScore function", cmdlog.DefaultPathToFile)
-
 	wg := new(sync.WaitGroup)
 
 	for i := 0 ; i < peersNum; i++ {
@@ -167,9 +164,7 @@ func (ns *nodeSet) updateAllNodeScore() error {
 		ip := peer.Get("Status").Get("Addr").MustString()
 		nodeId := peer.Get("ID").MustString()
 		wg.Add(1)
-		cmdlog.Write(cmdlog.Debug, "sync wait group add 1, ip = " + ip, cmdlog.DefaultPathToFile)
 		go calcNodeScore(ns, nodeId, ip, wg)
-		cmdlog.Write(cmdlog.Debug, "new thread to calc node score, ip  = " + ip, cmdlog.DefaultPathToFile)
 	}
 
 	wg.Wait()
@@ -188,7 +183,7 @@ func calcNodeScore(ns *nodeSet, id string, ip string,  wg *sync.WaitGroup) error
 	nodeInfo.scoreSelf = 0.0
 	ns.nodes[id] = nodeInfo
 
-	/*// call url
+	// call url
 	url := "http://" + ip + ":4243/containers/all/stats"
 	res, err := http.Get(url)
 
@@ -199,6 +194,11 @@ func calcNodeScore(ns *nodeSet, id string, ip string,  wg *sync.WaitGroup) error
 	body, err := ioutil.ReadAll(res.Body)
 	if err != nil {
 		return errors.New("parse response body failed")
+	}
+
+	if string(body) == "null" {
+		cmdlog.Write(cmdlog.ScorePrint, "hostName: " + nodeInfo.Description.Hostname + ", return api null", cmdlog.DefaultPathToFile)
+		return errors.New("api return null")
 	}
 
 	statsJson, err := simplejson.NewJson(body)
@@ -234,11 +234,7 @@ func calcNodeScore(ns *nodeSet, id string, ip string,  wg *sync.WaitGroup) error
 
 		//calculate memory usage
 		usedMem += stat.Get("memory_stats").Get("usage").MustFloat64()
-	}*/
-
-	r := rand.New(rand.NewSource(time.Now().UnixNano()))
-	var usedCPU float64 = r.Float64()
-	var usedMem float64 = r.Float64()
+	}
 
 	const (
 		w1 = 1.0
