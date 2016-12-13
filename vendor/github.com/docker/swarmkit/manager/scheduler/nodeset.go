@@ -164,12 +164,12 @@ func (ns *nodeSet) updateAllNodeScore() error {
 		ip := peer.Get("Status").Get("Addr").MustString()
 		nodeId := peer.Get("ID").MustString()
 
-		managerStatus = peer.Get("ManagerStatus").Get("Leader").MustBool()
+		managerStatus := peer.Get("ManagerStatus").Get("Leader").MustBool()
 		if managerStatus == true {
 			cmdlog.Write(cmdlog.Debug, ip + ", neglecting calculating manager's score", cmdlog.DefaultPathToFile)
-			nodeInfo := ns.nodes[id]
+			nodeInfo := ns.nodes[nodeId]
 			nodeInfo.scoreSelf = 1000000000.0
-			ns.nodes[id] = nodeInfo
+			ns.nodes[nodeId] = nodeInfo
 			continue
 		} 
 
