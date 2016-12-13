@@ -1,7 +1,6 @@
 package cmdlog
 
 import (
-	"time"
 	"os/exec"
 )
 
@@ -14,8 +13,7 @@ const (
 )
 
 func Write(state string, event string, pathToFile string) {
-	t := time.Now().Format(time.UnixDate)
-	content := t + "\t" + state + "\t" + event
+	content := "$(date +'%F %T.%3N') " + state + " " + event
 	command := "echo \"" + content + "\" >> " + pathToFile
 	cmd := exec.Command("/bin/sh", "-c", command)
 	cmd.Run()
