@@ -163,6 +163,16 @@ func (ns *nodeSet) updateAllNodeScore() error {
 		peer := statsJson.GetIndex(i)
 		ip := peer.Get("Status").Get("Addr").MustString()
 		nodeId := peer.Get("ID").MustString()
+
+		managerStatus = peer.Get("ManagerStatus").Get("Leader").MustBool()
+		if managerStatus == true {
+			cmdlog.Write(cmdlog.Debug, ip + ", neglecting calculating manager's score", cmdlog.DefaultPathToFile)
+			nodeInfo := ns.nodes[id]
+			nodeInfo.scoreSelf = 1000000000.0
+			ns.nodes[id] = nodeInfo
+			continue
+		} 
+
 		wg.Add(1)
 		cmdlog.Write(cmdlog.Debug, ip + ", before calculating node score", cmdlog.DefaultPathToFile)
 		go calcNodeScore(ns, nodeId, ip, wg)
