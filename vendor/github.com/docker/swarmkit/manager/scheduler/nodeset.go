@@ -164,7 +164,9 @@ func (ns *nodeSet) updateAllNodeScore() error {
 		ip := peer.Get("Status").Get("Addr").MustString()
 		nodeId := peer.Get("ID").MustString()
 		wg.Add(1)
+		cmdlog.Write(cmdlog.Debug, ip + ", before calculating node score", cmdlog.DefaultPathToFile)
 		go calcNodeScore(ns, nodeId, ip, wg)
+		cmdlog.Write(cmdlog.Debug, ip + ", after calculating node score", cmdlog.DefaultPathToFile)
 	}
 
 	wg.Wait()
