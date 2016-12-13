@@ -14,6 +14,12 @@ import (
 	"github.com/datexla/go-cmdlog"
 )
 
+const (
+	cpuWeight = 1.0
+	memWeight = 1.0
+	infWeight = 1000000000.0
+)
+
 var errNodeNotFound = errors.New("node not found in scheduler dataset")
 
 type nodeSet struct {
@@ -165,23 +171,19 @@ func (ns *nodeSet) updateAllNodeScore() error {
 		nodeId := peer.Get("ID").MustString()
 
 		managerStatus := peer.Get("ManagerStatus").Get("Leader").MustBool()
-		if managerStatus == true {
-			cmdlog.Write(cmdlog.Debug, ip + ", neglecting calculating manager's score", cmdlog.DefaultPathToFile)
+		if managerStatus {
 			nodeInfo := ns.nodes[nodeId]
-			nodeInfo.scoreSelf = 1000000000.0
+			nodeInfo.scoreSelf = infWeight
 			ns.nodes[nodeId] = nodeInfo
+			cmdlog.Write(cmdlog.ScorePrint, "hostName: " + nodeInfo.Description.Hostname + " is a manager, neglecting calculating manager's score" + ", nodeID: " + nodeId + ", ip: " + ip, cmdlog.DefaultPathToFile)
 			continue
-		} 
+		}
 
 		wg.Add(1)
-		cmdlog.Write(cmdlog.Debug, ip + ", before calculating node score", cmdlog.DefaultPathToFile)
 		go calcNodeScore(ns, nodeId, ip, wg)
-		cmdlog.Write(cmdlog.Debug, ip + ", after calculating node score", cmdlog.DefaultPathToFile)
 	}
 
 	wg.Wait()
-
-	cmdlog.Write(cmdlog.Debug, "finish updating all nodes scores", cmdlog.DefaultPathToFile)
 
 	return nil
 }
@@ -203,17 +205,12 @@ func calcNodeScore(ns *nodeSet, id string, ip string,  wg *sync.WaitGroup) error
 		return errors.New("call url failed")
 	}
 
-	cmdlog.Write(cmdlog.Debug, ip + ", after http get =>" + res.Status, cmdlog.DefaultPathToFile)
-
 	body, err := ioutil.ReadAll(res.Body)
 	if err != nil {
 		return errors.New("parse response body failed")
 	}
 
-	cmdlog.Write(cmdlog.Debug, ip + ", after ioutil readall =>" + string(body), cmdlog.DefaultPathToFile)
-
 	if string(body) == "null\n" {
-		cmdlog.Write(cmdlog.ScorePrint, "hostName: " + nodeInfo.Description.Hostname + ", return api null", cmdlog.DefaultPathToFile)
 		return errors.New("api return null")
 	}
 
@@ -222,11 +219,7 @@ func calcNodeScore(ns *nodeSet, id string, ip string,  wg *sync.WaitGroup) error
 		return errors.New("parse json failed")
 	}
 
-	cmdlog.Write(cmdlog.Debug, ip + ", after simplejson newJson", cmdlog.DefaultPathToFile)
-
 	statsNum := len(statsJson.MustArray())
-
-	cmdlog.Write(cmdlog.Debug, ip + ", after simplejson len " + string(statsNum), cmdlog.DefaultPathToFile)
 
 	var usedCPU float64 = 0.0
 	var usedMem float64 = 0.0
@@ -257,20 +250,11 @@ func calcNodeScore(ns *nodeSet, id string, ip string,  wg *sync.WaitGroup) error
 		usedMem += stat.Get("memory_stats").Get("usage").MustFloat64()
 	}
 
-	usedCPUStr := strconv.FormatFloat(usedCPU, 'f', -1, 64)
-	usedMemStr := strconv.FormatFloat(usedMem, 'f', -1, 64)
-	cmdlog.Write(cmdlog.Debug, ip + ", after calc usedCPU: " + usedCPUStr + ", usedMem: " + usedMemStr, cmdlog.DefaultPathToFile)
-
-	const (
-		w1 = 1.0
-		w2 = 1.0
-	)
-
 	totalMem := float64(nodeInfo.Description.Resources.MemoryBytes)
 
 	cpuScore := usedCPU
 	memScore := usedMem / totalMem * 100.0
-	score := w1 * cpuScore + w2 * memScore
+	score := cpuWeight * cpuScore + memWeight * memScore
 
 	// update score
 	nodeInfo.scoreSelf = score
