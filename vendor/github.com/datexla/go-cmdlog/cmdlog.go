@@ -6,10 +6,11 @@ import (
 
 const (
 	DefaultPathToFile = "/var/log/docker/scheduler.log"
-	ServiceCome       = "[service come  ]"
-	ServiceFinish     = "[service finish]"
-	ScorePrint        = "[score   print ]"
-	Debug             = "[debug         ]"
+	ServiceCome       = "[service  come  ]"
+	ServiceFinish     = "[service  finish]"
+	ScorePrint        = "[score    print ]"
+	ScheduleFinish    = "[schedule finish]"
+	Debug             = "[debug          ]"
 )
 
 func Write(state string, event string, pathToFile string) {

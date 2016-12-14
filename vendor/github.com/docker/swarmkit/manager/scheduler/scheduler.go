@@ -564,6 +564,9 @@ func (s *Scheduler) scheduleTaskGroup(ctx context.Context, taskGroup map[string]
 			}
 		}
 	}
+
+	cmdlog.Write(cmdlog.ScheduleFinish, "serviceId: " + t.ServiceID + ", taskID: " + t.ID, cmdlog.DefaultPathToFile)
+
 }
 
 func (s *Scheduler) noSuitableNode(ctx context.Context, taskGroup map[string]*api.Task, schedulingDecisions map[string]schedulingDecision) {
