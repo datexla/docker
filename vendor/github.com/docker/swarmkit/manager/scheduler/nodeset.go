@@ -175,7 +175,7 @@ func (ns *nodeSet) updateAllNodeScore() error {
 			nodeInfo := ns.nodes[nodeId]
 			nodeInfo.scoreSelf = infWeight
 			ns.nodes[nodeId] = nodeInfo
-			cmdlog.Write(cmdlog.ScorePrint, "hostName: " + nodeInfo.Description.Hostname + " is a manager, neglecting calculating manager's score" + ", nodeID: " + nodeId + ", ip: " + ip, cmdlog.DefaultPathToFile)
+			cmdlog.Write(cmdlog.ManagerInfo, "hostName: " + nodeInfo.Description.Hostname + " is a manager, neglecting calculating manager's score" + ", nodeID: " + nodeId + ", ip: " + ip, cmdlog.DefaultPathToFile)
 			continue
 		}
 
@@ -211,6 +211,7 @@ func calcNodeScore(ns *nodeSet, id string, ip string,  wg *sync.WaitGroup) error
 	}
 
 	if string(body) == "null\n" {
+		cmdlog.Write(cmdlog.ScorePrint, "hostName: " + nodeInfo.Description.Hostname + ", score: 0.0, cpuScore: 0.0, memScore: 0.0, nodeID: " + id + ", ip: " + ip, cmdlog.DefaultPathToFile)
 		return errors.New("api return null")
 	}
 

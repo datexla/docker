@@ -10,6 +10,7 @@ const (
 	ServiceFinish     = "[service  finish]"
 	ScorePrint        = "[score    print ]"
 	ScheduleFinish    = "[schedule finish]"
+	ManagerInfo       = "[Manager  Info  ]"
 	Debug             = "[debug          ]"
 )
 
