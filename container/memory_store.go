@@ -34,6 +34,11 @@ func (c *memoryStore) Get(id string) *Container {
 	return res
 }
 
+// GetAll returns all containers from the store (DATEXLA)
+func (c *memoryStore) GetAll() []*Container {
+	return c.all()
+}
+
 // Delete removes a container from the store by id.
 func (c *memoryStore) Delete(id string) {
 	c.Lock()

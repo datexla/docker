@@ -177,7 +177,6 @@ func (daemon *Daemon) AllContainerStats(ctx context.Context, config *backend.Con
 		}
 
 		updates := daemon.subscribeToContainerStats(container)
-		defer daemon.unsubscribeToContainerStats(container, updates)
 
 		noStreamFirstFrame := true
 		hasOutput := false
@@ -208,10 +207,21 @@ func (daemon *Daemon) AllContainerStats(ctx context.Context, config *backend.Con
 				return nil
 			}
 		}
+
+		daemon.unsubscribeToContainerStats(container, updates)
 	}
-	if err := enc.Encode(multiStatsJson); err != nil {
-		return err
+
+	if len(multiStatsJson) == 0 {
+		var emptyArray [0]string
+		if err := enc.Encode(emptyArray); err != nil {
+			return err
+		}
+	} else {
+		if err := enc.Encode(multiStatsJson); err != nil {
+			return err
+		}
 	}
+
 	return nil
 }
 

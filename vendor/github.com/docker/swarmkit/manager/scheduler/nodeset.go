@@ -165,10 +165,6 @@ func (ns *nodeSet) updateAllNodeScore() error {
 
 	peersNum := len(statsJson.MustArray())
 
-	if (peersNum > 0 && peersNum < 13) == false {
-		return errors.New("number parsing error")
-	}
-
 	wg := new(sync.WaitGroup)
 
 	for i := 0 ; i < peersNum; i++ {

@@ -151,9 +151,9 @@ func (daemon *Daemon) GetByName(name string) (*container.Container, error) {
 	return e, nil
 }
 
-// GetByName returns all containers
+// GetAll returns all containers
 func (daemon *Daemon) GetAll() ([]*container.Container, error) {
-	return daemon.containers.List(), nil
+	return daemon.containers.GetAll(), nil
 }
 
 // newBaseContainer creates a new container with its initial
