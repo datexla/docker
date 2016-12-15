@@ -140,8 +140,6 @@ func (ns *nodeSet) findBestNodes(n int, meetsConstraints func(*NodeInfo) bool, n
 }
 
 func (ns *nodeSet) updateAllNodeScore() error {
-	// url := "http://127.0.0.1:4243/nodes?filters={%22role%22:[%22worker%22]}"
-	// url := "http://127.0.0.1:4243/nodes?filters=%7b%22role%22%3a%5b%22worker%22%5d%7d"
 	url := "http://127.0.0.1:4243/nodes"
 
 	res, err := http.Get(url)
@@ -156,6 +154,10 @@ func (ns *nodeSet) updateAllNodeScore() error {
 		return errors.New("parse response body failed")
 	}
 
+	if string(body) == "null\n" {
+		return errors.New("api return null")
+	}
+	
 	statsJson, err := simplejson.NewJson(body)
 	if err != nil {
 		return errors.New("parse json failed")
