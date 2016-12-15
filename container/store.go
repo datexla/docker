@@ -15,6 +15,8 @@ type Store interface {
 	Add(string, *Container)
 	// Get returns a container from the store by the identifier it was stored with.
 	Get(string) *Container
+	// GetAll returns all containers
+	GetAll() []*Container
 	// Delete removes a container from the store by the identifier it was stored with.
 	Delete(string)
 	// List returns a list of containers from the store.
