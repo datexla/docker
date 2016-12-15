@@ -157,13 +157,17 @@ func (ns *nodeSet) updateAllNodeScore() error {
 	if string(body) == "null\n" {
 		return errors.New("api return null")
 	}
-	
+
 	statsJson, err := simplejson.NewJson(body)
 	if err != nil {
 		return errors.New("parse json failed")
 	}
 
 	peersNum := len(statsJson.MustArray())
+
+	if (peersNum > 0 && peersNum < 13) == false {
+		return errors.New("number parsing error")
+	}
 
 	wg := new(sync.WaitGroup)
 
@@ -172,14 +176,14 @@ func (ns *nodeSet) updateAllNodeScore() error {
 		ip := peer.Get("Status").Get("Addr").MustString()
 		nodeId := peer.Get("ID").MustString()
 
-		// managerStatus := peer.Get("ManagerStatus").Get("Leader").MustBool()
-		// if managerStatus {
-		// 	nodeInfo := ns.nodes[nodeId]
-		// 	nodeInfo.scoreSelf = infWeight
-		// 	ns.nodes[nodeId] = nodeInfo
-		// 	cmdlog.Write(cmdlog.ManagerInfo, "hostName: " + nodeInfo.Description.Hostname + " is a manager, neglecting calculating manager's score" + ", nodeID: " + nodeId + ", ip: " + ip, cmdlog.DefaultPathToFile)
-		// 	continue
-		// }
+		managerStatus := peer.Get("ManagerStatus").Get("Leader").MustBool()
+		if managerStatus {
+			nodeInfo := ns.nodes[nodeId]
+			nodeInfo.scoreSelf = infWeight
+			ns.nodes[nodeId] = nodeInfo
+			cmdlog.Write(cmdlog.ManagerInfo, "hostName: " + nodeInfo.Description.Hostname + " is a manager, neglecting calculating manager's score" + ", nodeID: " + nodeId + ", ip: " + ip, cmdlog.DefaultPathToFile)
+			continue
+		}
 
 		wg.Add(1)
 		go calcNodeScore(ns, nodeId, ip, wg)
@@ -226,6 +230,10 @@ func calcNodeScore(ns *nodeSet, id string, ip string,  wg *sync.WaitGroup) error
 
 	var usedCPU float64 = 0.0
 	var usedMem float64 = 0.0
+
+	if (statsNum > 0 && statsNum < 13) == false {
+		return errors.New("number parsing error")
+	}
 
 	for i := 0; i < statsNum; i++ {
 		stat := statsJson.GetIndex(i)
