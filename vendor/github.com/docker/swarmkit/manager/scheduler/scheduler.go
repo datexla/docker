@@ -503,7 +503,7 @@ func (s *Scheduler) scheduleTaskGroup(ctx context.Context, taskGroup map[string]
 
 	s.pipeline.SetTask(t)
 
-	// s.nodeSet.updateAllNodeScore()
+	s.nodeSet.updateAllNodeScore()
 
 	// nodeLess := func(a *NodeInfo, b *NodeInfo) bool {
 	// 	// Judge by scoreSelf field
