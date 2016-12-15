@@ -170,14 +170,14 @@ func (ns *nodeSet) updateAllNodeScore() error {
 		ip := peer.Get("Status").Get("Addr").MustString()
 		nodeId := peer.Get("ID").MustString()
 
-		managerStatus := peer.Get("ManagerStatus").Get("Leader").MustBool()
-		if managerStatus {
-			nodeInfo := ns.nodes[nodeId]
-			nodeInfo.scoreSelf = infWeight
-			ns.nodes[nodeId] = nodeInfo
-			cmdlog.Write(cmdlog.ManagerInfo, "hostName: " + nodeInfo.Description.Hostname + " is a manager, neglecting calculating manager's score" + ", nodeID: " + nodeId + ", ip: " + ip, cmdlog.DefaultPathToFile)
-			continue
-		}
+		// managerStatus := peer.Get("ManagerStatus").Get("Leader").MustBool()
+		// if managerStatus {
+		// 	nodeInfo := ns.nodes[nodeId]
+		// 	nodeInfo.scoreSelf = infWeight
+		// 	ns.nodes[nodeId] = nodeInfo
+		// 	cmdlog.Write(cmdlog.ManagerInfo, "hostName: " + nodeInfo.Description.Hostname + " is a manager, neglecting calculating manager's score" + ", nodeID: " + nodeId + ", ip: " + ip, cmdlog.DefaultPathToFile)
+		// 	continue
+		// }
 
 		wg.Add(1)
 		go calcNodeScore(ns, nodeId, ip, wg)
