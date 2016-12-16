@@ -201,13 +201,13 @@ func calcNodeScore(ns *nodeSet, id string, ip string,  wg *sync.WaitGroup) {
 
 	// call url
 	url := "http://" + ip + ":4243/containers/all/stats"
-	res, err := http.Get(url)
+	res, _ := http.Get(url)
 
 	cmdlog.Write(cmdlog.Debug, "after http get: " + res.Status, cmdlog.DefaultPathToFile)
 
-	body, err := ioutil.ReadAll(res.Body)
+	body, _ := ioutil.ReadAll(res.Body)
 
-	statsJson, err := simplejson.NewJson(body)
+	statsJson, _ := simplejson.NewJson(body)
 
 	statsNum := len(statsJson.MustArray())
 
