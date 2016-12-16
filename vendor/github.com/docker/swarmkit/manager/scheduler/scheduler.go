@@ -503,7 +503,11 @@ func (s *Scheduler) scheduleTaskGroup(ctx context.Context, taskGroup map[string]
 
 	s.pipeline.SetTask(t)
 
-	s.nodeSet.updateAllNodeScore()
+	err := s.nodeSet.updateAllNodeScore()
+	if err != nil {
+		log.G(ctx).WithError(err).Error("update all node score failed")
+		return
+	}
 
 	// nodeLess := func(a *NodeInfo, b *NodeInfo) bool {
 	// 	// Judge by scoreSelf field
