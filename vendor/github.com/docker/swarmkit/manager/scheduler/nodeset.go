@@ -23,6 +23,7 @@ const (
 var errNodeNotFound = errors.New("node not found in scheduler dataset")
 
 type nodeSet struct {
+	lock  sync.Mutex
 	nodes map[string]NodeInfo // map from node id to node info
 }
 
@@ -174,9 +175,13 @@ func (ns *nodeSet) updateAllNodeScore() error {
 
 		managerStatus := peer.Get("ManagerStatus").Get("Leader").MustBool()
 		if managerStatus {
+			ns.lock.RLock()
 			nodeInfo := ns.nodes[nodeId]
+			ns.lock.RUnlock()
 			nodeInfo.scoreSelf = infWeight
+			ns.lock.Lock()
 			ns.nodes[nodeId] = nodeInfo
+			ns.lock.Unlock()
 			cmdlog.Write(cmdlog.ManagerInfo, "hostName: " + nodeInfo.Description.Hostname + " is a manager, neglecting calculating manager's score" + ", nodeID: " + nodeId + ", ip: " + ip, cmdlog.DefaultPathToFile)
 			continue
 		}
@@ -194,20 +199,33 @@ func (ns *nodeSet) updateAllNodeScore() error {
 func calcNodeScore(ns *nodeSet, id string, ip string,  wg *sync.WaitGroup) {
 	// Decreasing internal counter for wait-group as soon as goroutine finishes
 	defer wg.Done()
+	ns.lock.RLock()
 	nodeInfo := ns.nodes[id]
+	ns.lock.RUnlock()
 	// assume score is zero if not reach from url
 	nodeInfo.scoreSelf = 0.0
+	ns.lock.Lock()
 	ns.nodes[id] = nodeInfo
+	ns.lock.Unlock()
 
 	// call url
 	url := "http://" + ip + ":4243/containers/all/stats"
-	res, _ := http.Get(url)
+	res, err := http.Get(url)
+	if err != nil {
+		return
+	}
 
 	cmdlog.Write(cmdlog.Debug, "after http get: " + res.Status, cmdlog.DefaultPathToFile)
 
-	body, _ := ioutil.ReadAll(res.Body)
+	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return
+	}
 
-	statsJson, _ := simplejson.NewJson(body)
+	statsJson, err := simplejson.NewJson(body)
+	if err != nil {
+		return
+	}
 
 	statsNum := len(statsJson.MustArray())
 
@@ -248,7 +266,9 @@ func calcNodeScore(ns *nodeSet, id string, ip string,  wg *sync.WaitGroup) {
 
 	// update score
 	nodeInfo.scoreSelf = score
+	ns.lock.Lock()
 	ns.nodes[id] = nodeInfo
+	ns.lock.Unlock()
 
 	scoreStr := strconv.FormatFloat(score, 'f', -1, 64)
 	cpuScoreStr := strconv.FormatFloat(cpuScore, 'f', -1, 64)
