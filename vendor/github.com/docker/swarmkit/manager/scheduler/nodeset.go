@@ -23,7 +23,7 @@ const (
 var errNodeNotFound = errors.New("node not found in scheduler dataset")
 
 type nodeSet struct {
-	lock  sync.Mutex
+	lock  sync.RWMutex
 	nodes map[string]NodeInfo // map from node id to node info
 }
 
