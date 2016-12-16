@@ -165,27 +165,7 @@ func (ns *nodeSet) updateAllNodeScore() error {
 
 	peersNum := len(statsJson.MustArray())
 
-	// wg := new(sync.WaitGroup)
-
-	// for i := 0 ; i < peersNum; i++ {
-	// 	peer := statsJson.GetIndex(i)
-	// 	ip := peer.Get("Status").Get("Addr").MustString()
-	// 	nodeId := peer.Get("ID").MustString()
-
-	// 	managerStatus := peer.Get("ManagerStatus").Get("Leader").MustBool()
-	// 	if managerStatus {
-	// 		nodeInfo := ns.nodes[nodeId]
-	// 		nodeInfo.scoreSelf = infWeight
-	// 		ns.nodes[nodeId] = nodeInfo
-	// 		cmdlog.Write(cmdlog.ManagerInfo, "hostName: " + nodeInfo.Description.Hostname + " is a manager, neglecting calculating manager's score" + ", nodeID: " + nodeId + ", ip: " + ip, cmdlog.DefaultPathToFile)
-	// 		continue
-	// 	}
-
-	// 	wg.Add(1)
-	// 	go calcNodeScore(ns, nodeId, ip, wg)
-	// }
-
-	// wg.Wait()
+	wg := new(sync.WaitGroup)
 
 	for i := 0 ; i < peersNum; i++ {
 		peer := statsJson.GetIndex(i)
@@ -201,14 +181,19 @@ func (ns *nodeSet) updateAllNodeScore() error {
 			continue
 		}
 
-		calcNodeScore(ns, nodeId, ip)
+		wg.Add(1)
+		go calcNodeScore(ns, nodeId, ip, wg)
 	}
+
+	wg.Wait()
 
 	return nil
 }
 
 // func calcNodeScore(ns *nodeSet, id string, ip string,  wg *sync.WaitGroup) error {
-func calcNodeScore(ns *nodeSet, id string, ip string) {
+func calcNodeScore(ns *nodeSet, id string, ip string,  wg *sync.WaitGroup) {
+	// Decreasing internal counter for wait-group as soon as goroutine finishes
+	defer wg.Done()
 	nodeInfo := ns.nodes[id]
 	// assume score is zero if not reach from url
 	nodeInfo.scoreSelf = 0.0
@@ -216,13 +201,13 @@ func calcNodeScore(ns *nodeSet, id string, ip string) {
 
 	// call url
 	url := "http://" + ip + ":4243/containers/all/stats"
-	res, _ := http.Get(url)
+	res, err := http.Get(url)
 
 	cmdlog.Write(cmdlog.Debug, "after http get: " + res.Status, cmdlog.DefaultPathToFile)
 
-	body, _ := ioutil.ReadAll(res.Body)
+	body, err := ioutil.ReadAll(res.Body)
 
-	statsJson, _ := simplejson.NewJson(body)
+	statsJson, err := simplejson.NewJson(body)
 
 	statsNum := len(statsJson.MustArray())
 
@@ -270,86 +255,3 @@ func calcNodeScore(ns *nodeSet, id string, ip string) {
 	memScoreStr := strconv.FormatFloat(memScore, 'f', -1, 64)
 	cmdlog.Write(cmdlog.ScorePrint, "hostName: " + nodeInfo.Description.Hostname + ", score: " + scoreStr + ", cpuScore: " + cpuScoreStr + ", memScore: " + memScoreStr + ", nodeID: " + id + ", ip: " + ip, cmdlog.DefaultPathToFile)
 }
-
-// // func calcNodeScore(ns *nodeSet, id string, ip string,  wg *sync.WaitGroup) error {
-// func calcNodeScore(ns *nodeSet, id string, ip string,  wg *sync.WaitGroup) error {
-// 	// Decreasing internal counter for wait-group as soon as goroutine finishes
-// 	defer wg.Done()
-// 	nodeInfo := ns.nodes[id]
-// 	// assume score is zero if not reach from url
-// 	nodeInfo.scoreSelf = 0.0
-// 	ns.nodes[id] = nodeInfo
-
-// 	// call url
-// 	url := "http://" + ip + ":4243/containers/all/stats"
-// 	res, err := http.Get(url)
-
-// 	if err != nil {
-// 		return errors.New("call url failed")
-// 	}
-
-// 	cmdlog.Write(cmdlog.Debug, "after http get: " + res.Status, cmdlog.DefaultPathToFile)
-
-// 	body, err := ioutil.ReadAll(res.Body)
-// 	if err != nil {
-// 		return errors.New("parse response body failed")
-// 	}
-
-// 	// if string(body) == "null\n" {
-// 	// 	cmdlog.Write(cmdlog.ScorePrint, "hostName: " + nodeInfo.Description.Hostname + ", score: 0.0, cpuScore: 0.0, memScore: 0.0, nodeID: " + id + ", ip: " + ip, cmdlog.DefaultPathToFile)
-// 	// 	return errors.New("api return null")
-// 	// }
-
-// 	statsJson, err := simplejson.NewJson(body)
-// 	if err != nil {
-// 		return errors.New("parse json failed")
-// 	}
-
-// 	statsNum := len(statsJson.MustArray())
-
-// 	var usedCPU float64 = 0.0
-// 	var usedMem float64 = 0.0
-
-// 	for i := 0; i < statsNum; i++ {
-// 		stat := statsJson.GetIndex(i)
-
-// 		//calculate CPU usage
-// 		cpuPercentage := 0.0
-
-// 		currCPU := stat.Get("cpu_stats").Get("cpu_usage").Get("total_usage").MustFloat64()
-// 		prevCPU := stat.Get("precpu_stats").Get("cpu_usage").Get("total_usage").MustFloat64()
-// 		deltaCPU := currCPU - prevCPU
-		
-// 		currSys := stat.Get("cpu_stats").Get("system_cpu_usage").MustFloat64()
-// 		prevSys := stat.Get("precpu_stats").Get("system_cpu_usage").MustFloat64()
-// 		deltaSys := currSys - prevSys
-		
-// 		numCores := float64(len(stat.Get("cpu_stats").Get("cpu_usage").Get("percpu_usage").MustArray()))
-		
-// 		if deltaCPU > 0.0 && deltaSys > 0.0 {
-// 			cpuPercentage = deltaCPU / deltaSys * numCores * 100.0
-// 		}
-
-// 		usedCPU += cpuPercentage
-
-// 		//calculate memory usage
-// 		usedMem += stat.Get("memory_stats").Get("usage").MustFloat64()
-// 	}
-
-// 	totalMem := float64(nodeInfo.Description.Resources.MemoryBytes)
-
-// 	cpuScore := usedCPU
-// 	memScore := usedMem / totalMem * 100.0
-// 	score := cpuWeight * cpuScore + memWeight * memScore
-
-// 	// update score
-// 	nodeInfo.scoreSelf = score
-// 	ns.nodes[id] = nodeInfo
-
-// 	scoreStr := strconv.FormatFloat(score, 'f', -1, 64)
-// 	cpuScoreStr := strconv.FormatFloat(cpuScore, 'f', -1, 64)
-// 	memScoreStr := strconv.FormatFloat(memScore, 'f', -1, 64)
-// 	cmdlog.Write(cmdlog.ScorePrint, "hostName: " + nodeInfo.Description.Hostname + ", score: " + scoreStr + ", cpuScore: " + cpuScoreStr + ", memScore: " + memScoreStr + ", nodeID: " + id + ", ip: " + ip, cmdlog.DefaultPathToFile)
-
-// 	return nil
-// }
