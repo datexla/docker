@@ -215,8 +215,6 @@ func calcNodeScore(ns *nodeSet, id string, ip string,  wg *sync.WaitGroup) {
 		return
 	}
 
-	cmdlog.Write(cmdlog.Debug, "after http get: " + res.Status, cmdlog.DefaultPathToFile)
-
 	body, err := ioutil.ReadAll(res.Body)
 	if err != nil {
 		return
