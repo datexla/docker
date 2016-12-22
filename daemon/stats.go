@@ -17,6 +17,12 @@ import (
 	"github.com/docker/docker/pkg/ioutils"
 )
 
+const (
+	cpuWeight = 1.0
+	memWeight = 2.0
+	infWeight = 1000000000.0
+)
+
 // ContainerStats writes information about the container to the stream
 // given in the config object.
 func (daemon *Daemon) ContainerStats(ctx context.Context, prefixOrName string, config *backend.ContainerStatsConfig) error {
@@ -169,7 +175,7 @@ func (daemon *Daemon) AllContainerStats(ctx context.Context, config *backend.Con
 
 	enc := json.NewEncoder(outStream)
 
-	var multiStatsJson []interface{}
+	var hostStats types.HostStats
 	for _, container := range containers {
 		// If the container is either not running or restarting and requires no stream, return an empty stats.
 		if (!container.IsRunning() || container.IsRestarting()) && !config.Stream {
@@ -187,12 +193,9 @@ func (daemon *Daemon) AllContainerStats(ctx context.Context, config *backend.Con
 					return nil
 				}
 
-				var statsJSON interface{}
 				statsJSONPost120 := getStatJSON(v)
 				statsJSONPost120.Name = container.Name
 				statsJSONPost120.ID = container.ID
-
-				statsJSON = statsJSONPost120
 
 				if !config.Stream && noStreamFirstFrame {
 					// prime the cpu stats so they aren't 0 in the final output
@@ -200,7 +203,34 @@ func (daemon *Daemon) AllContainerStats(ctx context.Context, config *backend.Con
 					continue
 				}
 
-				multiStatsJson = append(multiStatsJson, statsJSON)
+				curCPU := float64(statsJSONPost120.CPUStats.CPUUsage.TotalUsage)
+				prevCPU := float64(statsJSONPost120.PreCPUStats.CPUUsage.TotalUsage)
+				deltaCPU := curCPU - prevCPU
+
+				curSys := float64(statsJSONPost120.CPUStats.SystemUsage)
+				prevSys := float64(statsJSONPost120.PreCPUStats.SystemUsage)
+				deltaSys := curSys - prevSys
+
+				numCores := float64(len(tatsJSONPost120.CPUStats.CPUUsage.PercpuUsage))
+
+				cpuPercentage := 0.0
+				if deltaCPU > 0.0 && deltaSys > 0.0 {
+					cpuPercentage = deltaCPU / deltaSys * numCores * 100.0
+					hostStats.CPUScore += cpuPercentage
+				}
+
+				curMEM := float64(statsJSONPost120.MemoryStats.Usage)
+				totalMEM := float64(daemon.cluster.Description.Resources.MemoryBytes)
+				memPercentage := curMEM / totalMEM * 100.0
+
+				hostStats.MemScore += memPercentage
+
+				score := cpuWeight * cpuPercentage + memWeight * memPercentage
+				hostStats.Score += score
+
+				hostStats.NodeName = daemon.cluster.Description.Hostname
+				hostStats.CalcTime = time.Now()
+
 				hasOutput = true
 
 			case <-ctx.Done():
@@ -211,15 +241,8 @@ func (daemon *Daemon) AllContainerStats(ctx context.Context, config *backend.Con
 		daemon.unsubscribeToContainerStats(container, updates)
 	}
 
-	if len(multiStatsJson) == 0 {
-		var emptyArray [0]string
-		if err := enc.Encode(emptyArray); err != nil {
-			return err
-		}
-	} else {
-		if err := enc.Encode(multiStatsJson); err != nil {
-			return err
-		}
+	if err := enc.Encode(hostStats); err != nil {
+		return err
 	}
 
 	return nil
