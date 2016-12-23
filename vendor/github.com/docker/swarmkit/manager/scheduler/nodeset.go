@@ -225,42 +225,9 @@ func calcNodeScore(ns *nodeSet, id string, ip string,  wg *sync.WaitGroup) {
 		return
 	}
 
-	statsNum := len(statsJson.MustArray())
-
-	var usedCPU float64 = 0.0
-	var usedMem float64 = 0.0
-
-	for i := 0; i < statsNum; i++ {
-		stat := statsJson.GetIndex(i)
-
-		//calculate CPU usage
-		cpuPercentage := 0.0
-
-		currCPU := stat.Get("cpu_stats").Get("cpu_usage").Get("total_usage").MustFloat64()
-		prevCPU := stat.Get("precpu_stats").Get("cpu_usage").Get("total_usage").MustFloat64()
-		deltaCPU := currCPU - prevCPU
-		
-		currSys := stat.Get("cpu_stats").Get("system_cpu_usage").MustFloat64()
-		prevSys := stat.Get("precpu_stats").Get("system_cpu_usage").MustFloat64()
-		deltaSys := currSys - prevSys
-		
-		numCores := float64(len(stat.Get("cpu_stats").Get("cpu_usage").Get("percpu_usage").MustArray()))
-		
-		if deltaCPU > 0.0 && deltaSys > 0.0 {
-			cpuPercentage = deltaCPU / deltaSys * numCores * 100.0
-		}
-
-		usedCPU += cpuPercentage
-
-		//calculate memory usage
-		usedMem += stat.Get("memory_stats").Get("usage").MustFloat64()
-	}
-
-	totalMem := float64(nodeInfo.Description.Resources.MemoryBytes)
-
-	cpuScore := usedCPU
-	memScore := usedMem / totalMem * 100.0
-	score := cpuWeight * cpuScore + memWeight * memScore
+	cpuScore := statsJson.Get("cpuScore").MustFloat64()
+	memScore := statsJson.Get("memScore").MustFloat64()
+	score := statsJson.Get("score").MustFloat64()
 
 	// update score
 	nodeInfo.scoreSelf = score
