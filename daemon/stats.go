@@ -211,7 +211,7 @@ func (daemon *Daemon) AllContainerStats(ctx context.Context, config *backend.Con
 				prevSys := float64(statsJSONPost120.PreCPUStats.SystemUsage)
 				deltaSys := curSys - prevSys
 
-				numCores := float64(len(tatsJSONPost120.CPUStats.CPUUsage.PercpuUsage))
+				numCores := float64(len(statsJSONPost120.CPUStats.CPUUsage.PercpuUsage))
 
 				cpuPercentage := 0.0
 				if deltaCPU > 0.0 && deltaSys > 0.0 {
@@ -220,7 +220,7 @@ func (daemon *Daemon) AllContainerStats(ctx context.Context, config *backend.Con
 				}
 
 				curMEM := float64(statsJSONPost120.MemoryStats.Usage)
-				totalMEM := float64(daemon.cluster.Description.Resources.MemoryBytes)
+				totalMEM := float64(970485760.0)
 				memPercentage := curMEM / totalMEM * 100.0
 
 				hostStats.MemScore += memPercentage
@@ -228,7 +228,7 @@ func (daemon *Daemon) AllContainerStats(ctx context.Context, config *backend.Con
 				score := cpuWeight * cpuPercentage + memWeight * memPercentage
 				hostStats.Score += score
 
-				hostStats.NodeName = daemon.cluster.Description.Hostname
+				hostStats.NodeName = daemon.cluster.config.Hostname
 				hostStats.CalcTime = time.Now()
 
 				hasOutput = true
