@@ -228,7 +228,6 @@ func (daemon *Daemon) AllContainerStats(ctx context.Context, config *backend.Con
 				score := cpuWeight * cpuPercentage + memWeight * memPercentage
 				hostStats.Score += score
 
-				hostStats.NodeName = daemon.cluster.node.Node.config.Hostname
 				hostStats.CalcTime = time.Now()
 
 				hasOutput = true

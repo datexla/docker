@@ -180,7 +180,6 @@ type StatsJSON struct {
 // HostStats is defined by DATEXLA
 type HostStats struct {
 	CalcTime time.Time `json:"calcTime"`
-	NodeName string `json:"nodeName"`
 	CPUScore float64 `json:"cpuScore"`
 	MemScore float64 `json:"memScore"`
 	Score float64 `json:"score"`
