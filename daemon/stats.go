@@ -228,7 +228,7 @@ func (daemon *Daemon) AllContainerStats(ctx context.Context, config *backend.Con
 				score := cpuWeight * cpuPercentage + memWeight * memPercentage
 				hostStats.Score += score
 
-				hostStats.CalcTime = time.Now()
+				hostStats.CalcTime = time.Now().Format("2006-01-02 15:04:05")
 
 				hasOutput = true
 
