@@ -210,7 +210,7 @@ func calcNodeScore(ns *nodeSet, id string, hostName string, wg *sync.WaitGroup) 
 	ns.lock.Unlock()
 
 	// call url
-	url := "http://192.168.10.141:5000/cluster/" + hostName + "/score"
+	url := "http://192.168.10.40:5000/cluster/" + hostName + "/score"
 	res, err := http.Get(url)
 	if err != nil {
 		return
@@ -220,7 +220,8 @@ func calcNodeScore(ns *nodeSet, id string, hostName string, wg *sync.WaitGroup) 
 	if err != nil {
 		return
 	}
-	score, err := ParseFloat(body, 64)
+	scoreStr := string(body)
+	score, err := strconv.ParseFloat(scoreStr, 64)
 	if err != nil {
 		return
 	}
@@ -230,7 +231,6 @@ func calcNodeScore(ns *nodeSet, id string, hostName string, wg *sync.WaitGroup) 
 	ns.lock.Lock()
 	ns.nodes[id] = nodeInfo
 	ns.lock.Unlock()
-
-	scoreStr := body
-	cmdlog.Write(cmdlog.ScorePrint, "hostName: " + nodeInfo.Description.Hostname + ", score: " + scoreStr + ", cpuScore: *, memScore: *, nodeID: " + id + ", ip: " + ip, cmdlog.DefaultPathToFile)
+	
+	cmdlog.Write(cmdlog.ScorePrint, "hostName: " + nodeInfo.Description.Hostname + ", score: " + scoreStr + ", cpuScore: *, memScore: *, nodeID: " + id + ", ip: *", cmdlog.DefaultPathToFile)
 }
