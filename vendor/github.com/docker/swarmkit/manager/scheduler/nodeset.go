@@ -170,9 +170,10 @@ func (ns *nodeSet) updateAllNodeScore() error {
 
 	for i := 0 ; i < peersNum; i++ {
 		peer := statsJson.GetIndex(i)
-		ip := peer.Get("Status").Get("Addr").MustString()
+		hostName := peer.Get("Description").Get("Hostname").MustString()
 		nodeId := peer.Get("ID").MustString()
-
+		
+		// ip := peer.Get("Status").Get("Addr").MustString()
 		// managerStatus := peer.Get("ManagerStatus").Get("Leader").MustBool()
 		// if managerStatus {
 		// 	ns.lock.RLock()
@@ -187,7 +188,7 @@ func (ns *nodeSet) updateAllNodeScore() error {
 		// }
 
 		wg.Add(1)
-		go calcNodeScore(ns, nodeId, ip, wg)
+		go calcNodeScore(ns, nodeId, hostName, wg)
 	}
 
 	wg.Wait()
@@ -196,7 +197,7 @@ func (ns *nodeSet) updateAllNodeScore() error {
 }
 
 // func calcNodeScore(ns *nodeSet, id string, ip string,  wg *sync.WaitGroup) error {
-func calcNodeScore(ns *nodeSet, id string, ip string,  wg *sync.WaitGroup) {
+func calcNodeScore(ns *nodeSet, id string, hostName string, wg *sync.WaitGroup) {
 	// Decreasing internal counter for wait-group as soon as goroutine finishes
 	defer wg.Done()
 	ns.lock.RLock()
@@ -209,7 +210,7 @@ func calcNodeScore(ns *nodeSet, id string, ip string,  wg *sync.WaitGroup) {
 	ns.lock.Unlock()
 
 	// call url
-	url := "http://" + ip + ":4243/containers/all/stats"
+	url := "http://192.168.10.141:5000/cluster/" + hostName + "/score"
 	res, err := http.Get(url)
 	if err != nil {
 		return
@@ -219,15 +220,10 @@ func calcNodeScore(ns *nodeSet, id string, ip string,  wg *sync.WaitGroup) {
 	if err != nil {
 		return
 	}
-
-	statsJson, err := simplejson.NewJson(body)
+	score, err := ParseFloat(body, 64)
 	if err != nil {
 		return
 	}
-
-	cpuScore := statsJson.Get("cpuScore").MustFloat64()
-	memScore := statsJson.Get("memScore").MustFloat64()
-	score := statsJson.Get("score").MustFloat64()
 
 	// update score
 	nodeInfo.scoreSelf = score
@@ -235,8 +231,6 @@ func calcNodeScore(ns *nodeSet, id string, ip string,  wg *sync.WaitGroup) {
 	ns.nodes[id] = nodeInfo
 	ns.lock.Unlock()
 
-	scoreStr := strconv.FormatFloat(score, 'f', -1, 64)
-	cpuScoreStr := strconv.FormatFloat(cpuScore, 'f', -1, 64)
-	memScoreStr := strconv.FormatFloat(memScore, 'f', -1, 64)
-	cmdlog.Write(cmdlog.ScorePrint, "hostName: " + nodeInfo.Description.Hostname + ", score: " + scoreStr + ", cpuScore: " + cpuScoreStr + ", memScore: " + memScoreStr + ", nodeID: " + id + ", ip: " + ip, cmdlog.DefaultPathToFile)
+	scoreStr := body
+	cmdlog.Write(cmdlog.ScorePrint, "hostName: " + nodeInfo.Description.Hostname + ", score: " + scoreStr + ", cpuScore: *, memScore: *, nodeID: " + id + ", ip: " + ip, cmdlog.DefaultPathToFile)
 }
