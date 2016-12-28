@@ -499,7 +499,7 @@ func (s *Scheduler) scheduleTaskGroup(ctx context.Context, taskGroup map[string]
 		break
 	}
 
-	// cmdlog.Write(cmdlog.ServiceCome, "serviceId: " + t.ServiceID + ", taskID: " + t.ID, cmdlog.DefaultPathToFile)
+	cmdlog.Write(cmdlog.ServiceCome, "serviceId: " + t.ServiceID + ", taskID: " + t.ID, cmdlog.DefaultPathToFile)
 
 	s.pipeline.SetTask(t)
 
@@ -509,43 +509,43 @@ func (s *Scheduler) scheduleTaskGroup(ctx context.Context, taskGroup map[string]
 		return
 	}
 
-	// nodeLess := func(a *NodeInfo, b *NodeInfo) bool {
-	// 	// Judge by scoreSelf field
-	// 	return a.scoreSelf < b.scoreSelf
-	// }
-
-	cmdlog.Write(cmdlog.ServiceCome, "serviceId: " + t.ServiceID + ", taskID: " + t.ID, cmdlog.DefaultPathToFile)
-
-	now := time.Now()
-
 	nodeLess := func(a *NodeInfo, b *NodeInfo) bool {
-		// If either node has at least maxFailures recent failures,
-		// that's the deciding factor.
-		recentFailuresA := a.countRecentFailures(now, t.ServiceID)
-		recentFailuresB := b.countRecentFailures(now, t.ServiceID)
-
-		if recentFailuresA >= maxFailures || recentFailuresB >= maxFailures {
-			if recentFailuresA > recentFailuresB {
-				return false
-			}
-			if recentFailuresB > recentFailuresA {
-				return true
-			}
-		}
-
-		tasksByServiceA := a.DesiredRunningTasksCountByService[t.ServiceID]
-		tasksByServiceB := b.DesiredRunningTasksCountByService[t.ServiceID]
-
-		if tasksByServiceA < tasksByServiceB {
-			return true
-		}
-		if tasksByServiceA > tasksByServiceB {
-			return false
-		}
-
-		// Total number of tasks breaks ties.
-		return a.DesiredRunningTasksCount < b.DesiredRunningTasksCount
+		// Judge by scoreSelf field
+		return a.scoreSelf < b.scoreSelf
 	}
+
+	// cmdlog.Write(cmdlog.ServiceCome, "serviceId: " + t.ServiceID + ", taskID: " + t.ID, cmdlog.DefaultPathToFile)
+
+	// now := time.Now()
+
+	// nodeLess := func(a *NodeInfo, b *NodeInfo) bool {
+	// 	// If either node has at least maxFailures recent failures,
+	// 	// that's the deciding factor.
+	// 	recentFailuresA := a.countRecentFailures(now, t.ServiceID)
+	// 	recentFailuresB := b.countRecentFailures(now, t.ServiceID)
+
+	// 	if recentFailuresA >= maxFailures || recentFailuresB >= maxFailures {
+	// 		if recentFailuresA > recentFailuresB {
+	// 			return false
+	// 		}
+	// 		if recentFailuresB > recentFailuresA {
+	// 			return true
+	// 		}
+	// 	}
+
+	// 	tasksByServiceA := a.DesiredRunningTasksCountByService[t.ServiceID]
+	// 	tasksByServiceB := b.DesiredRunningTasksCountByService[t.ServiceID]
+
+	// 	if tasksByServiceA < tasksByServiceB {
+	// 		return true
+	// 	}
+	// 	if tasksByServiceA > tasksByServiceB {
+	// 		return false
+	// 	}
+
+	// 	// Total number of tasks breaks ties.
+	// 	return a.DesiredRunningTasksCount < b.DesiredRunningTasksCount
+	// }
 
 	nodes := s.nodeSet.findBestNodes(len(taskGroup), s.pipeline.Process, nodeLess)
 	if len(nodes) == 0 {
