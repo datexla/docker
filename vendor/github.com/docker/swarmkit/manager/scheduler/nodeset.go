@@ -173,19 +173,19 @@ func (ns *nodeSet) updateAllNodeScore() error {
 		hostName := peer.Get("Description").Get("Hostname").MustString()
 		nodeId := peer.Get("ID").MustString()
 		
-		// ip := peer.Get("Status").Get("Addr").MustString()
-		// managerStatus := peer.Get("ManagerStatus").Get("Leader").MustBool()
-		// if managerStatus {
-		// 	ns.lock.RLock()
-		// 	nodeInfo := ns.nodes[nodeId]
-		// 	ns.lock.RUnlock()
-		// 	nodeInfo.scoreSelf = infWeight
-		// 	ns.lock.Lock()
-		// 	ns.nodes[nodeId] = nodeInfo
-		// 	ns.lock.Unlock()
-		// 	cmdlog.Write(cmdlog.ManagerInfo, "hostName: " + nodeInfo.Description.Hostname + " is a manager, neglecting calculating manager's score" + ", nodeID: " + nodeId + ", ip: " + ip, cmdlog.DefaultPathToFile)
-		// 	continue
-		// }
+		ip := peer.Get("Status").Get("Addr").MustString()
+		managerStatus := peer.Get("ManagerStatus").Get("Leader").MustBool()
+		if managerStatus {
+			ns.lock.RLock()
+			nodeInfo := ns.nodes[nodeId]
+			ns.lock.RUnlock()
+			nodeInfo.scoreSelf = infWeight
+			ns.lock.Lock()
+			ns.nodes[nodeId] = nodeInfo
+			ns.lock.Unlock()
+			cmdlog.Write(cmdlog.ManagerInfo, "hostName: " + nodeInfo.Description.Hostname + " is a manager, neglecting calculating manager's score" + ", nodeID: " + nodeId + ", ip: " + ip, cmdlog.DefaultPathToFile)
+			continue
+		}
 
 		wg.Add(1)
 		go calcNodeScore(ns, nodeId, hostName, wg)
